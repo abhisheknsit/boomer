@@ -30,13 +30,14 @@ var (
 
 const (
 	RequestTimeout int = 0
+	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
 type weightParams struct {
-	magnitude int
-	frequency int
-	constant  int
-	phase     int
+	Magnitude int
+	Frequency int
+	Constant  int
+	Phase     int
 }
 
 type header struct {
@@ -46,7 +47,7 @@ type header struct {
 
 type Test struct {
 	Url     string       `json:"url,omitempty"`
-	Headers []header     `json:"headers,omitempty"`
+	Headers []header     `json:"header,omitempty"`
 	Body    int64        `json:"body,omitempty"`
 	Weight  weightParams `json:"weight,omitempty"`
 	Method  string       `json:"method,omitempty"`
@@ -55,6 +56,14 @@ type Test struct {
 
 type suite struct {
 	suite []Test
+}
+
+func RandStringBytes(n int64) string {
+    b := make([]byte, n)
+    for i := range b {
+        b[i] = letterBytes[rand.Intn(len(letterBytes))]
+    }
+    return string(b)
 }
 
 func createHTTPClient() *http.Client {
@@ -102,9 +111,9 @@ func httpReq(method string, url string, bodysize int64, headers []header, wait1 
 		}
 		if headers != nil {
 			for _, header := range headers {
-				req.Header.Set(header.name, string(postData[:header.value]))
+				req.Header.Set(header.Name, RandStringBytes(header.Value))
+				log.Println("Setting header: ", header.Name)
 			}
-			log.Println("in headers")
 		}
 		//Using http stat and handing over the request to the context
 		var result httpstat.Result
@@ -167,10 +176,10 @@ func httpReq(method string, url string, bodysize int64, headers []header, wait1 
 func WeightFn(params weightParams) func() int {
 	return func() (weight int) {
 		base := 0.0
-		if params.frequency != 0 {
-			base = math.Cos(float64(time.Now().Unix())*(2*math.Pi/float64(params.frequency)) + float64(params.phase))
+		if params.Frequency != 0 {
+			base = math.Cos(float64(time.Now().Unix())*(2*math.Pi/float64(params.Frequency)) + float64(params.Phase))
 		}
-		weight = int(base*float64(params.magnitude)) + params.constant
+		weight = int(base*float64(params.Magnitude)) + params.Constant
 		if weight < 0 {
 			weight = 0
 		}
